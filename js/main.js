@@ -14,8 +14,7 @@ const attrsToString = (obj = {}) => {
 };
 
 const tagAttrs = (obj) => (content = "") =>
-  `<${obj.tag}${obj.attrs ? " " : ""}${attrsToString(obj.attrs)}>${content}</${
-    obj.tag
+  `<${obj.tag}${obj.attrs ? " " : ""}${attrsToString(obj.attrs)}>${content}</${obj.tag
   }>`;
 
 const tag = (t) => {
@@ -31,6 +30,9 @@ const tableCells = (items) => items.map(tableCell).join(";");
 
 const tableRowTag = tag("tr");
 const tableRow = (items) => compose(tableRowTag, tableCells)(items);
+
+const trashIcon = tag({ tag: 'i', attrs: { class: 'fas fa-trash-alt' } })('')
+
 
 let description = $("#description");
 let carbs = $("#carbs");
@@ -57,6 +59,8 @@ const validateInputs = () => {
   if (description.val() && calories.val() && carbs.val() && protein.val()) {
     add();
     cleanInputs();
+    updateTotals()
+    renderItems()
   }
 };
 
@@ -64,13 +68,29 @@ const add = () => {
   const newItem = {
     description: description.val(),
     calories: parseInt(calories.val(), 10),
-    carbs: parseInt(calories.val(), 10),
-    protein: parseInt(protein.val()),
+    carbs: parseInt(carbs.val(), 10),
+    protein: parseInt(protein.val(), 10),
   };
 
   list.push(newItem);
   console.log(list);
 };
+
+const updateTotals = () => {
+  let calories = 0
+  let carbs = 0
+  let proteins = 0
+
+  list.map(item => {
+    calories += item.calories
+    carbs += item.carbs
+    proteins += item.protein
+  })
+
+  $('#totalCalories').text(calories)
+  $('#totalCarbs').text(carbs)
+  $('#totalProteins').text(proteins)
+}
 
 const cleanInputs = () => {
   description.val("");
@@ -78,6 +98,28 @@ const cleanInputs = () => {
   carbs.val("");
   protein.val("");
 };
+
+
+const renderItems = () => {
+  $('tbody').empty();
+  list.map((item, index) => {
+    const removeButton = tag({
+      tag: "button",
+      attrs: {
+        class: 'btn btn-outline-danger',
+        onclick: `removeItem(${index})`
+      }
+    })(trashIcon)
+    $('tbody').append(tableRow([item.description, item.calories, item.carbs, item.protein, removeButton]))
+  })
+}
+
+
+const removeItem = index => {
+  list.splice(index,1)
+  updateTotals()
+  renderItems()
+}
 
 description.keypress(() => {
   description.removeClass("is-invalid");
